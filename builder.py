@@ -41,13 +41,13 @@ def add_question_on_document(doc, index, question, answers):
     return doc
 
 
-def save_document(doc, index):
-    path = Path("docs") / f"{index}.docx"
+def save_document(doc, index, dir):
+    path = Path(dir) / f"{index}.docx"
     doc.save(path)
 
 
-def save_dat(dat, index):
-    path = Path("keys") / f"k{index}.dat"
+def save_dat(dat, index, dir):
+    path = Path(dir) / f"k{index}.dat"
     with open(path, "w") as f:
         f.write("\n".join(dat))
 
