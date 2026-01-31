@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from string import ascii_uppercase
 
@@ -7,6 +8,7 @@ from docx.shared import Pt
 FONT_NAME = "Calibri"
 NORMAL_SIZE = Pt(12)
 SMALL_SIZE = Pt(8)
+SCRIPT_PATTERN = re.compile(r"(<sup>.*?</sup>|<sub>.*?</sub>)", re.IGNORECASE)
 
 
 def create_document(header_text, intro):
@@ -51,6 +53,26 @@ def save_dat(dat, index, dir):
 def _add_paragraphs_to_document(doc, paragraphs):
     for text in paragraphs:
         p = doc.add_paragraph()
-        run = p.add_run(text)
+        _add_formatted_text(p, text)
+
+
+def _add_formatted_text(paragraph, text):
+    parts = SCRIPT_PATTERN.split(text)
+
+    for part in parts:
+        if not part:
+            continue
+
+        if part.lower().startswith("<sup>") and part.lower().endswith("</sup>"):
+            content = part[5:-6]
+            run = paragraph.add_run(content)
+            run.font.superscript = True
+        elif part.lower().startswith("<sub>") and part.lower().endswith("</sub>"):
+            content = part[5:-6]
+            run = paragraph.add_run(content)
+            run.font.subscript = True
+        else:
+            run = paragraph.add_run(part)
+
         run.font.size = NORMAL_SIZE
         run.font.name = FONT_NAME
