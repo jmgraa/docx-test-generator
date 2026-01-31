@@ -7,13 +7,9 @@ from docx.shared import Pt
 FONT_NAME = "Calibri"
 NORMAL_SIZE = Pt(12)
 SMALL_SIZE = Pt(8)
-PARAGRAPHS = [
-    "PRZED PRZYSTĄPIENIEM DO WYPEŁNIANIA FORMULARZA ODPOWIEDZI PROSZĘ PRZECZYTAĆ INSTRUKCJĘ. PROSZĘ PAMIĘTAĆ O CZYTELNYM PODPISANIU FORMULARZA ODPOWIEDZI W PRAWYM-DOLNYM ROGU.",
-    "PROSZĘ PAMIĘTAĆ O POPRAWNYM OZNACZENIU NUMERU TESTU I NUMERU IDENTYFIKACYJNEGO STUDENTA",
-]
 
 
-def create_document(header_text):
+def create_document(header_text, intro):
     doc = Document()
 
     header = doc.sections[0].header
@@ -22,7 +18,7 @@ def create_document(header_text):
     run_h.font.size = SMALL_SIZE
     run_h.font.name = FONT_NAME
 
-    _add_paragraphs_to_document(doc, PARAGRAPHS)
+    _add_paragraphs_to_document(doc, intro.split("\n"))
 
     return doc
 
