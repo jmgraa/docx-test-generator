@@ -1,5 +1,6 @@
 import random
 from pathlib import Path
+from shutil import rmtree
 
 from builder import add_question_on_document, create_document, save_dat, save_document
 from parsing import parse_exam_file
@@ -7,13 +8,15 @@ from shuffling import shuffle_answers
 
 
 def mix_tests(input_params):
-    questions = parse_exam_file(input_params.file_path)
-    number_of_questions = len(questions)
-
     docx_dir = Path(input_params.output_dir) / "Testy"
     dat_dir = Path(input_params.output_dir) / "KluczeDAT"
+    images_dir = Path(input_params.output_dir) / "Images"
     docx_dir.mkdir()
     dat_dir.mkdir()
+    images_dir.mkdir()
+
+    questions = parse_exam_file(input_params.file_path, images_dir)
+    number_of_questions = len(questions)
 
     for i in range(1, input_params.copy_number + 1):
         yield i
@@ -26,10 +29,10 @@ def mix_tests(input_params):
 
         for q_num, q in enumerate(shuffled_questions):
             shuffled_answers, order = shuffle_answers(q)
-            docx = add_question_on_document(
-                docx, q_num + 1, q.content, shuffled_answers
-            )
+            docx = add_question_on_document(docx, q_num + 1, q, shuffled_answers)
             datfile.append(f"{q.id} {" ".join(str(x + 1) for x in order)}")
 
         save_document(docx, i, docx_dir)
         save_dat(datfile, i, dat_dir)
+
+    rmtree(images_dir)
