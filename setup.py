@@ -7,7 +7,7 @@ from shuffling import shuffle_answers
 
 
 def mix_tests(input_params):
-    questions = parse_exam_file(input_params.file_path)
+    questions = parse_exam_file(input_params.file_path, input_params.output_dir)
     number_of_questions = len(questions)
 
     docx_dir = Path(input_params.output_dir) / "Testy"
@@ -26,9 +26,7 @@ def mix_tests(input_params):
 
         for q_num, q in enumerate(shuffled_questions):
             shuffled_answers, order = shuffle_answers(q)
-            docx = add_question_on_document(
-                docx, q_num + 1, q.content, shuffled_answers
-            )
+            docx = add_question_on_document(docx, q_num + 1, q, shuffled_answers)
             datfile.append(f"{q.id} {" ".join(str(x + 1) for x in order)}")
 
         save_document(docx, i, docx_dir)

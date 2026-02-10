@@ -3,7 +3,7 @@ from pathlib import Path
 from string import ascii_uppercase
 
 from docx import Document
-from docx.shared import Pt
+from docx.shared import Emu, Pt
 
 FONT_NAME = "Calibri"
 NORMAL_SIZE = Pt(12)
@@ -26,17 +26,44 @@ def create_document(header_text, intro):
 
 
 def add_question_on_document(doc, index, question, answers):
-    question_and_answers = [
-        f"{index}) {question}",
-        (" " * 5).join(
-            [f"{ascii_uppercase[i]}) {a["text"]}" for i, a in enumerate(answers)]
-        ),
-    ]
+    p_q = doc.add_paragraph()
+    _add_formatted_text(p_q, f"{index}) {question.content}")
+    _add_picture(question.images, doc)
 
-    _add_paragraphs_to_document(doc, question_and_answers)
+    for i, answer in enumerate(answers):
+        label = ascii_uppercase[i]
+
+        p_a = doc.add_paragraph()
+        _add_formatted_text(p_a, f"{label}) {answer['text']}")
+        _add_picture(answer["images"], doc)
+
     doc.add_paragraph()
 
     return doc
+
+
+def _add_picture(images, doc):
+    for image_info in images:
+        img_path = image_info.get("path")
+        width_emu = image_info.get("width_emu")
+        height_emu = image_info.get("height_emu")
+
+        if not img_path:
+            continue
+
+        p_a_img = doc.add_paragraph()
+        run_a_img = p_a_img.add_run()
+        try:
+            if width_emu and height_emu:
+                run_a_img.add_picture(
+                    str(img_path),
+                    width=Emu(width_emu),
+                    height=Emu(height_emu),
+                )
+            else:
+                run_a_img.add_picture(str(img_path))
+        except Exception:
+            p_a_img.add_run(f"[OBRAZEK: {Path(img_path).name}]")
 
 
 def save_document(doc, index, dir):

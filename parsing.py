@@ -1,6 +1,9 @@
+from pathlib import Path
+from shutil import rmtree
 from string import ascii_uppercase
 
 from docx import Document
+from docx.oxml.ns import qn
 
 SYMBOL_TO_UNICODE = {
     # --- Greek Lowercase ---
@@ -99,19 +102,27 @@ SYMBOL_TO_UNICODE = {
 }
 
 NS_W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+NS_A = "{http://schemas.openxmlformats.org/drawingml/2006/main}"
+NS_WP = "{http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing}"
 
 
 class ExamQuestion:
-    def __init__(self, q_id, content):
+    def __init__(self, q_id, content, images=None):
         self.id = q_id
         self.content = content
+        self.images = images or []
         self.answers = []
         self.weight = "1"
         self.order = None
 
-    def add_answer(self, label, is_correct, text):
+    def add_answer(self, label, is_correct, text, images=None):
         self.answers.append(
-            {"label": label, "is_correct": is_correct == "1", "text": text}
+            {
+                "label": label,
+                "is_correct": is_correct == "1",
+                "text": text,
+                "images": images or [],
+            }
         )
 
     def __repr__(self):
@@ -156,7 +167,63 @@ def get_formatted_text(cell):
     return "".join(full_text).strip()
 
 
-def parse_exam_file(file_path):
+def _extract_images_from_cell(cell, doc, image_output_dir, prefix):
+    image_infos = []
+
+    for paragraph in cell.paragraphs:
+        for run in paragraph.runs:
+            for blip in run._element.iter(f"{NS_A}blip"):
+                r_id = blip.get(qn("r:embed"))
+                if not r_id:
+                    continue
+
+                image_part = doc.part.related_parts.get(r_id)
+                if image_part is None:
+                    continue
+
+                inline_or_anchor = None
+                parent = blip
+                while parent is not None:
+                    if parent.tag in (f"{NS_WP}inline", f"{NS_WP}anchor"):
+                        inline_or_anchor = parent
+                        break
+                    parent = parent.getparent()
+
+                width_emu = height_emu = None
+                if inline_or_anchor is not None:
+                    extent = inline_or_anchor.find(f"{NS_WP}extent")
+                    if extent is not None:
+                        cx = extent.get("cx")
+                        cy = extent.get("cy")
+                        if cx and cy:
+                            try:
+                                width_emu = int(cx)
+                                height_emu = int(cy)
+                            except ValueError:
+                                width_emu = height_emu = None
+
+                ext = Path(image_part.filename).suffix or ".png"
+                filename = f"{prefix}_{len(image_infos) + 1}{ext}"
+                out_path = image_output_dir / filename
+
+                if not out_path.exists():
+                    with open(out_path, "wb") as f:
+                        f.write(image_part.blob)
+
+                image_infos.append(
+                    {
+                        "path": str(out_path),
+                        "width_emu": width_emu,
+                        "height_emu": height_emu,
+                    }
+                )
+
+    return image_infos
+
+
+def parse_exam_file(file_path, output_dir):
+    images_dir = Path(output_dir) / "Images"
+    images_dir.mkdir()
     doc = Document(file_path)
     questions = []
     current_q = None
@@ -169,14 +236,27 @@ def parse_exam_file(file_path):
                 continue
 
             col_text = [cells[i].text.strip() for i in range(4)]
-            content_text = get_formatted_text(cells[4])
 
             if col_text[0].isdigit():
-                current_q = ExamQuestion(col_text[0], content_text)
+                q_id = col_text[0]
+                content_text = get_formatted_text(cells[4])
+                question_images = _extract_images_from_cell(
+                    cells[4], doc, images_dir, f"q{q_id}"
+                )
+                current_q = ExamQuestion(q_id, content_text, question_images)
                 questions.append(current_q)
             elif current_q and col_text[1] in ascii_uppercase:
-                current_q.add_answer(col_text[1], col_text[2], content_text)
+                label = col_text[1]
+                content_text = get_formatted_text(cells[4])
+                answer_images = _extract_images_from_cell(
+                    cells[4],
+                    doc,
+                    images_dir,
+                    f"q{current_q.id}_ans_{label}",
+                )
+                current_q.add_answer(label, col_text[2], content_text, answer_images)
                 if col_text[3].isdigit():
                     current_q.weight = col_text[3]
 
+    rmtree(images_dir)
     return questions
