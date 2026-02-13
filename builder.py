@@ -70,6 +70,12 @@ def _add_picture(images, doc):
 
 
 def save_document(doc, index, dir):
+    if len(doc.paragraphs) > 0:
+        last_para = doc.paragraphs[-1]
+        if not last_para.text.strip():
+            p_element = last_para._p
+            p_element.getparent().remove(p_element)
+
     path = Path(dir) / f"{index}.docx"
     doc.save(path)
 
