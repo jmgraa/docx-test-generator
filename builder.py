@@ -74,10 +74,10 @@ def save_document(doc, index, dir):
     doc.save(path)
 
 
-def save_dat(dat, index, dir):
-    path = Path(dir) / f"k{index}.dat"
+def save_data_file(prefix, extension, data, index, dir):
+    path = Path(dir) / f"{prefix}{index}.{extension}"
     with open(path, "w") as f:
-        f.write("\n".join(dat))
+        f.write("\n".join(data))
 
 
 def _add_paragraphs_to_document(doc, paragraphs):
