@@ -3,6 +3,7 @@ from string import ascii_uppercase
 
 from docx import Document
 from docx.oxml.ns import qn
+from lxml import etree
 
 SYMBOL_TO_UNICODE = {
     # --- Greek Lowercase ---
@@ -103,6 +104,7 @@ SYMBOL_TO_UNICODE = {
 NS_W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 NS_A = "{http://schemas.openxmlformats.org/drawingml/2006/main}"
 NS_WP = "{http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing}"
+NS_M = "{http://schemas.openxmlformats.org/officeDocument/2006/math}"
 
 
 class ExamQuestion:
@@ -132,6 +134,8 @@ def get_formatted_text(cell):
     full_text = []
 
     for paragraph in cell.paragraphs:
+        processed_equations = set()
+
         for run in paragraph.runs:
             run_text = ""
             for child in run._element:
@@ -150,6 +154,8 @@ def get_formatted_text(cell):
                     run_text += "\t"
                 elif child.tag == f"{NS_W}br":
                     run_text += "\n"
+                elif _is_OMML_equation(child, full_text, processed_equations):
+                    pass
 
             if not run_text:
                 continue
@@ -160,6 +166,9 @@ def get_formatted_text(cell):
                 full_text.append(f"<sub>{run_text}</sub>")
             else:
                 full_text.append(run_text)
+
+        for child in paragraph._p:
+            _is_OMML_equation(child, full_text, processed_equations)
 
         full_text.append(" ")
 
@@ -218,6 +227,18 @@ def _extract_images_from_cell(cell, doc, image_output_dir, prefix):
                 )
 
     return image_infos
+
+
+def _is_OMML_equation(child, full_text, processed_equations):
+    if child.tag != f"{NS_M}oMath":
+        return False
+
+    if child not in processed_equations:
+        omml_xml = etree.tostring(child, encoding="unicode", pretty_print=False)
+        full_text.append(f"<eq>{omml_xml}</eq>")
+        processed_equations.add(child)
+
+    return True
 
 
 def parse_exam_file(file_path, images_dir):
