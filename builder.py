@@ -4,7 +4,7 @@ from string import ascii_uppercase
 
 from docx import Document
 from docx.oxml import parse_xml
-from docx.shared import Emu, Pt
+from docx.shared import Cm, Emu, Pt
 
 FONT_NAME = "Calibri"
 NORMAL_SIZE = Pt(12)
@@ -75,6 +75,12 @@ def save_document(doc, index, dir):
         if not last_para.text.strip():
             p_element = last_para._p
             p_element.getparent().remove(p_element)
+
+    for section in doc.sections:
+        section.top_margin = section.bottom_margin = Cm(1.8)
+        section.left_margin = section.right_margin = section.header_distance = (
+            section.footer_distance
+        ) = Cm(1)
 
     path = Path(dir) / f"{index}.docx"
     doc.save(path)
