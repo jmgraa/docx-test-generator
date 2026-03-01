@@ -33,11 +33,11 @@ def add_question_on_document(doc, index, question, answers):
     _add_formatted_text(p_q, f"{index}) {question.content}")
     _add_picture(question.images, doc)
 
+    p_a = doc.add_paragraph()
     for i, answer in enumerate(answers):
         label = ascii_uppercase[i]
 
-        p_a = doc.add_paragraph()
-        _add_formatted_text(p_a, f"{label}) {answer['text']}")
+        _add_formatted_text(p_a, f"{label}) {answer["text"]}\xa0\xa0\xa0\xa0\xa0")
         _add_picture(answer["images"], doc)
 
     doc.add_paragraph()

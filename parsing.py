@@ -121,7 +121,7 @@ class ExamQuestion:
             {
                 "label": label,
                 "is_correct": is_correct == "1",
-                "text": text,
+                "text": text.strip(),
                 "images": images or [],
             }
         )
