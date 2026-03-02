@@ -22,18 +22,33 @@ set_widget_scaling(1.05)
 
 class InputParams:
     def __init__(
-        self, file_path, title, date, copy_number, output_dir, intro=DEFAULT_INTRO
+        self,
+        file_path,
+        title,
+        date,
+        copy_number,
+        margin_v,
+        margin_h,
+        output_dir,
+        intro=DEFAULT_INTRO,
     ):
         self.file_path = file_path
         self.title = title
         self.date = date
         self.copy_number = copy_number
+        self.margin_v = margin_v
+        self.margin_h = margin_h
         self.output_dir = output_dir
         self.intro = intro
 
     def validate_input(self):
         validation = validate_input(
-            self.file_path, self.date, self.copy_number, self.output_dir
+            self.file_path,
+            self.date,
+            self.copy_number,
+            self.output_dir,
+            self.margin_v,
+            self.margin_h,
         )
 
         errors = "\n".join(e for e in validation if isinstance(e, str))
@@ -49,6 +64,10 @@ class InputParams:
         self.date = self.date.strip()
         if isinstance(self.copy_number, str):
             self.copy_number = int(self.copy_number.strip())
+        if isinstance(self.margin_v, str):
+            self.margin_v = float(self.margin_v.strip())
+        if isinstance(self.margin_h, str):
+            self.margin_h = float(self.margin_h.strip())
         self.output_dir = self.output_dir.strip()
 
 
@@ -64,10 +83,45 @@ class Popup(CTkToplevel):
         self.close_btn.pack(pady=10)
 
 
+class MarginsPopup(CTkToplevel):
+    def __init__(self, parent_app):
+        super().__init__()
+        self.parent_app = parent_app
+        self.geometry("320x280")
+        self.title("Ustawienia strony")
+        self.attributes("-topmost", True)
+
+        self.label_margin_v = CTkLabel(
+            self, text="Margines pionowy (cm)", font=LABEL_FONT
+        )
+        self.label_margin_v.pack(pady=(10, 4))
+        self.entry_margin_v = CTkEntry(self, placeholder_text="np. 1.5", width=200)
+        self.entry_margin_v.pack(pady=(0, 8))
+        self.entry_margin_v.insert(0, getattr(parent_app, "margin_v", "1"))
+
+        self.label_margin_h = CTkLabel(
+            self, text="Margines poziomy (cm)", font=LABEL_FONT
+        )
+        self.label_margin_h.pack(pady=(20, 4))
+        self.entry_margin_h = CTkEntry(self, placeholder_text="np. 1.5", width=200)
+        self.entry_margin_h.pack(pady=(0, 8))
+        self.entry_margin_h.insert(0, getattr(parent_app, "margin_h", "1"))
+
+        self.btn_ok = CTkButton(self, text="Zapisz", command=self._save_and_close)
+        self.btn_ok.pack(pady=16)
+
+    def _save_and_close(self):
+        self.parent_app.margin_h = self.entry_margin_h.get().strip() or "1"
+        self.parent_app.margin_v = self.entry_margin_v.get().strip() or "1"
+        self.destroy()
+
+
 class App(CTk):
     def __init__(self):
         super().__init__()
         self.popup_window = None
+        self.margin_h = "1"
+        self.margin_v = "1"
         self.title("Generator testów")
         self.geometry("700x850")
 
@@ -114,6 +168,11 @@ class App(CTk):
         self.label_dir = CTkLabel(self, text="Nie wybrano folderu", font=("Arial", 10))
         self.label_dir.pack()
 
+        self.btn_margins = CTkButton(
+            self, text="Ustawienia marginesów", command=self._open_margins_popup
+        )
+        self.btn_margins.pack(pady=(10, 5))
+
         self.btn_submit = CTkButton(
             self, text="Generuj pliki", fg_color="green", command=self.submit
         )
@@ -138,6 +197,8 @@ class App(CTk):
             self.entry_text.get(),
             self.date_text.get(),
             self.entry_num.get(),
+            self.margin_v,
+            self.margin_h,
             self.dir_path,
             self.textbox.get("1.0", "end-1c"),
         )
@@ -146,22 +207,25 @@ class App(CTk):
         if not errors:
             self.__run_generation(input_params)
         else:
-            self.__open_popup("Błąd", errors)
+            self.__open_info_popup("Błąd", errors)
 
     def __run_generation(self, data):
         try:
             for i in mix_tests(data):
                 self.progrss_bar.configure(text=f"Postęp: {i}/{data.copy_number}")
                 self.update_idletasks()
-            self.__open_popup("Sukces", "Pliki zostały wygenerowane!")
+            self.__open_info_popup("Sukces", "Pliki zostały wygenerowane!")
         except Exception as e:
-            self.__open_popup("Błąd", str(e))
+            self.__open_info_popup("Błąd", str(e))
 
-    def __open_popup(self, title, description):
+    def __open_info_popup(self, title, description):
         if self.popup_window is None or not self.popup_window.winfo_exists():
             self.popup_window = Popup(title, description)
         else:
             self.popup_window.focus()
+
+    def _open_margins_popup(self):
+        self.popup_window = MarginsPopup(self)
 
 
 if __name__ == "__main__":

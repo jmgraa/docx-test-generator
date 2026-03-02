@@ -53,7 +53,9 @@ def mix_tests(input_params):
                 f"{q_num + 1} {" ".join(str(x + 1) if not x else '0' for x in order)} {q.weight}"
             )
 
-        save_document(docx, i, dirs["docx_dir"])
+        save_document(
+            docx, i, dirs["docx_dir"], (input_params.margin_v, input_params.margin_h)
+        )
         save_data_file("k", "dat", dat_data, i, dirs["dat_dir"])
         save_data_file("klucz", "txt", txt_data, i, dirs["txt_dir"])
 

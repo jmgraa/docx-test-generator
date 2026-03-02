@@ -2,12 +2,14 @@ import os
 from datetime import datetime
 
 
-def validate_input(file_path, date, copy_number, output_dir):
+def validate_input(file_path, date, copy_number, output_dir, margin_h, margin_v):
     return [
         _validate_date(date),
         _validate_copy_number(copy_number),
         _validate_output_dir(output_dir),
         _is_docx_file(file_path),
+        _validate_margin(margin_h),
+        _validate_margin(margin_v),
     ]
 
 
@@ -46,3 +48,15 @@ def _is_docx_file(path):
         return True
 
     return "Niepoprawna ścieżka do pliku Word"
+
+
+def _validate_margin(value):
+    s = value.strip()
+
+    try:
+        f = float(s)
+        if f < 0:
+            return "Niewłaściwy margines (ujemna wartość)"
+        return True
+    except ValueError:
+        return "Niewłaściwy margines (wpisz liczbę)"

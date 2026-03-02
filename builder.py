@@ -69,7 +69,7 @@ def _add_picture(images, doc):
             p_a_img.add_run(f"[OBRAZEK: {Path(img_path).name}]")
 
 
-def save_document(doc, index, dir):
+def save_document(doc, index, dir, margins):
     if len(doc.paragraphs) > 0:
         last_para = doc.paragraphs[-1]
         if not last_para.text.strip():
@@ -77,10 +77,9 @@ def save_document(doc, index, dir):
             p_element.getparent().remove(p_element)
 
     for section in doc.sections:
-        section.top_margin = section.bottom_margin = Cm(1.8)
-        section.left_margin = section.right_margin = section.header_distance = (
-            section.footer_distance
-        ) = Cm(1)
+        section.top_margin = section.bottom_margin = Cm(margins[0] + 0.8)
+        section.left_margin = section.right_margin = Cm(margins[1])
+        section.header_distance = section.footer_distance = Cm(margins[0])
 
     path = Path(dir) / f"{index}.docx"
     doc.save(path)
