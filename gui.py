@@ -5,6 +5,7 @@ from customtkinter import (
     CTk,
     CTkButton,
     CTkEntry,
+    CTkFrame,
     CTkLabel,
     CTkTextbox,
     CTkToplevel,
@@ -95,7 +96,9 @@ class MarginsPopup(CTkToplevel):
             self, text="Margines pionowy (cm)", font=LABEL_FONT
         )
         self.label_margin_v.pack(pady=(10, 4))
-        self.entry_margin_v = CTkEntry(self, placeholder_text="np. 1.5", width=200)
+        self.entry_margin_v = CTkEntry(
+            self, placeholder_text="np. 1.5", width=200, justify="center"
+        )
         self.entry_margin_v.pack(pady=(0, 8))
         self.entry_margin_v.insert(0, getattr(parent_app, "margin_v", "1"))
 
@@ -103,7 +106,9 @@ class MarginsPopup(CTkToplevel):
             self, text="Margines poziomy (cm)", font=LABEL_FONT
         )
         self.label_margin_h.pack(pady=(20, 4))
-        self.entry_margin_h = CTkEntry(self, placeholder_text="np. 1.5", width=200)
+        self.entry_margin_h = CTkEntry(
+            self, placeholder_text="np. 1.5", width=200, justify="center"
+        )
         self.entry_margin_h.pack(pady=(0, 8))
         self.entry_margin_h.insert(0, getattr(parent_app, "margin_h", "1"))
 
@@ -123,63 +128,97 @@ class App(CTk):
         self.margin_h = "1"
         self.margin_v = "1"
         self.title("Generator testów")
-        self.geometry("700x850")
+        self.geometry("600x630")
 
-        self.label_num = CTkLabel(self, text="Liczba kopii", font=LABEL_FONT)
-        self.label_num.pack(pady=(20, 0))
-        self.entry_num = CTkEntry(self, placeholder_text="Liczba...")
-        self.entry_num.pack(pady=8)
+        self.top_row_frame = CTkFrame(self, fg_color="transparent")
+        self.top_row_frame.pack(pady=(15, 8), padx=20, fill="x")
+
+        self.label_num = CTkLabel(
+            self.top_row_frame, text="Liczba kopii", font=LABEL_FONT
+        )
+        self.label_num.grid(row=0, column=0, padx=(0, 40), pady=(0, 4))
+        self.entry_num = CTkEntry(
+            self.top_row_frame,
+            placeholder_text="Liczba...",
+            width=260,
+            justify="center",
+        )
+        self.entry_num.grid(row=1, column=0, padx=(0, 40), pady=(0, 4), sticky="we")
 
         self.label_text = CTkLabel(self, text="Nagłówek testu", font=LABEL_FONT)
-        self.label_text.pack(pady=(10, 0))
+        self.label_text.pack(pady=(18, 0))
         self.entry_text = CTkEntry(
             self,
             placeholder_text="Nagłówek...",
+            justify="center",
         )
         self.entry_text.pack(pady=8)
 
         self.date_label = CTkLabel(
-            self, text="Data testu (RRRR-MM-DD)", font=LABEL_FONT
+            self.top_row_frame, text="Data testu", font=LABEL_FONT
         )
-        self.date_label.pack(pady=(10, 0))
-        self.date_text = CTkEntry(self)
-        self.date_text.pack(pady=8)
+        self.date_label.grid(row=0, column=1, padx=(40, 0), pady=(0, 4))
+        self.date_text = CTkEntry(
+            self.top_row_frame,
+            width=260,
+            justify="center",
+            placeholder_text="RRRR-MM-DD",
+        )
+        self.date_text.grid(row=1, column=1, padx=(40, 0), pady=(0, 4), sticky="we")
         self.date_text.insert(0, date.today().isoformat())
 
+        self.top_row_frame.grid_columnconfigure(0, weight=1)
+        self.top_row_frame.grid_columnconfigure(1, weight=1)
+
         self.textbox_text = CTkLabel(self, text="Wstęp do testu", font=LABEL_FONT)
-        self.textbox_text.pack(pady=(10, 0))
+        self.textbox_text.pack(pady=(12, 0))
         self.textbox = CTkTextbox(self, width=500, height=200)
-        self.textbox.pack(padx=20, pady=20)
+        self.textbox.pack(padx=20, pady=10)
         self.textbox.insert("0.0", DEFAULT_INTRO)
 
         self.file_path = ""
+        self.buttons_row_frame = CTkFrame(self, fg_color="transparent")
+        self.buttons_row_frame.pack(pady=(18, 8), padx=20)
+
         self.btn_file = CTkButton(
-            self, text="Wybierz plik Word", command=self.pick_file
+            self.buttons_row_frame, text="Wybierz plik Word", command=self.pick_file
         )
-        self.btn_file.pack(pady=(20, 5))
-        self.label_file = CTkLabel(self, text="Nie wybrano pliku", font=("Arial", 10))
-        self.label_file.pack()
+        self.btn_file.grid(row=0, column=0, padx=(0, 10))
+        self.label_file = CTkLabel(
+            self.buttons_row_frame, text="Nie wybrano pliku", font=("Arial", 10)
+        )
+        self.label_file.grid(row=1, column=0, pady=(2, 0))
 
         self.dir_path = ""
         self.btn_dir = CTkButton(
-            self, text="Wybierz folder wyjściowy", command=self.pick_dir
+            self.buttons_row_frame,
+            text="Wybierz folder wyjściowy",
+            command=self.pick_dir,
         )
-        self.btn_dir.pack(pady=(20, 5))
-        self.label_dir = CTkLabel(self, text="Nie wybrano folderu", font=("Arial", 10))
-        self.label_dir.pack()
+        self.btn_dir.grid(row=0, column=1, padx=10)
+        self.label_dir = CTkLabel(
+            self.buttons_row_frame, text="Nie wybrano folderu", font=("Arial", 10)
+        )
+        self.label_dir.grid(row=1, column=1, pady=(2, 0))
 
         self.btn_margins = CTkButton(
-            self, text="Ustawienia marginesów", command=self._open_margins_popup
+            self.buttons_row_frame,
+            text="Ustawienia marginesów",
+            command=self._open_margins_popup,
         )
-        self.btn_margins.pack(pady=(10, 5))
+        self.btn_margins.grid(row=0, column=2, padx=(10, 0))
+
+        self.buttons_row_frame.grid_columnconfigure(0, weight=1)
+        self.buttons_row_frame.grid_columnconfigure(1, weight=1)
+        self.buttons_row_frame.grid_columnconfigure(2, weight=1)
 
         self.btn_submit = CTkButton(
             self, text="Generuj pliki", fg_color="green", command=self.submit
         )
-        self.btn_submit.pack(pady=20)
+        self.btn_submit.pack(pady=(18, 4))
 
         self.progrss_bar = CTkLabel(self, text="", font=("Arial", 10))
-        self.progrss_bar.pack()
+        self.progrss_bar.pack(pady=(0, 0))
 
     def pick_file(self):
         self.file_path = filedialog.askopenfilename(filetypes=[("Plik Word", "*.docx")])
@@ -189,7 +228,11 @@ class App(CTk):
     def pick_dir(self):
         self.dir_path = filedialog.askdirectory()
         if self.dir_path:
-            self.label_dir.configure(text=f"Folder: {self.dir_path}")
+            display_path = self.dir_path
+            max_len = 40
+            if len(display_path) > max_len:
+                display_path = "..." + display_path[-(max_len - 3) :]
+            self.label_dir.configure(text=f"Folder: {display_path}")
 
     def submit(self):
         input_params = InputParams(

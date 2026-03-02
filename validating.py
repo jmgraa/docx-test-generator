@@ -20,7 +20,7 @@ def _validate_date(date_string):
         datetime.strptime(date_string, "%Y-%m-%d")
         return True
     except ValueError:
-        return "Niepoprawna data lub jej format"
+        return "Niepoprawna data lub jej format (RRRR-MM-DD)"
 
 
 def _validate_copy_number(copy_number):
