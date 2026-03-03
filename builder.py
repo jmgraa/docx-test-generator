@@ -3,11 +3,13 @@ from pathlib import Path
 from string import ascii_uppercase
 
 from docx import Document
-from docx.oxml import parse_xml
+from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
+from docx.oxml import OxmlElement, parse_xml
+from docx.oxml.ns import qn
 from docx.shared import Cm, Emu, Pt
 
 FONT_NAME = "Calibri"
-NORMAL_SIZE = Pt(12)
+NORMAL_SIZE = Pt(11)
 SMALL_SIZE = Pt(8)
 SCRIPT_PATTERN = re.compile(
     r"(<sup>.*?</sup>|<sub>.*?</sub>|<eq>.*?</eq>)", re.IGNORECASE | re.DOTALL
@@ -17,11 +19,17 @@ SCRIPT_PATTERN = re.compile(
 def create_document(header_text, intro):
     doc = Document()
 
-    header = doc.sections[0].header
-    header_para = header.paragraphs[0]
-    run_h = header_para.add_run(header_text)
-    run_h.font.size = SMALL_SIZE
-    run_h.font.name = FONT_NAME
+    header, footer = doc.sections[0].header, doc.sections[0].footer
+    header_para, footer_para = header.paragraphs[0], footer.paragraphs[0]
+    run_h, run_f = header_para.add_run(header_text), footer_para.add_run()
+    run_h.font.size = run_f.font.size = SMALL_SIZE
+    run_h.font.name = run_f.font.name = FONT_NAME
+
+    footer_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    fld = OxmlElement("w:fldSimple")
+    fld.set(qn("w:instr"), "PAGE")
+    fld.append(run_f._element)
+    footer_para._p.append(fld)
 
     _add_paragraphs_to_document(doc, intro.split("\n"))
 
@@ -80,6 +88,13 @@ def save_document(doc, index, dir, margins):
         section.top_margin = section.bottom_margin = Cm(margins[0] + 0.8)
         section.left_margin = section.right_margin = Cm(margins[1])
         section.header_distance = section.footer_distance = Cm(margins[0])
+
+    for paragraph in doc.paragraphs:
+        fmt = paragraph.paragraph_format
+        fmt.line_spacing = Cm(0.5)
+        fmt.line_spacing_rule = WD_LINE_SPACING.EXACTLY
+        fmt.space_before = Pt(0)
+        fmt.space_after = Pt(8)
 
     path = Path(dir) / f"{index}.docx"
     doc.save(path)
