@@ -3,7 +3,7 @@ name: Build one-file executables
 on:
   push:
     branches:
-      - main
+      - releases-workflow
   workflow_dispatch:
 
 permissions:
@@ -85,4 +85,5 @@ jobs:
             dist-windows/docx-test-generator-windows-$DATE.exe \
             --title "$TITLE" \
             --notes "Automated build for commit $GITHUB_SHA."
+
 
