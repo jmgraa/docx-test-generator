@@ -95,10 +95,12 @@ def save_document(doc, index, dir, margins):
 
     for paragraph in doc.paragraphs:
         fmt = paragraph.paragraph_format
-        fmt.line_spacing = Cm(0.5)
-        fmt.line_spacing_rule = WD_LINE_SPACING.EXACTLY
         fmt.space_before = Pt(0)
         fmt.space_after = Pt(8)
+        if paragraph._p.findall(".//" + qn("w:drawing")):
+            continue
+        fmt.line_spacing = Cm(0.5)
+        fmt.line_spacing_rule = WD_LINE_SPACING.EXACTLY
 
     path = Path(dir) / f"{index}.docx"
     doc.save(path)
