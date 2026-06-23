@@ -19,6 +19,10 @@ SCRIPT_PATTERN = re.compile(
 def create_document(header_text, intro):
     doc = Document()
 
+    section = doc.sections[0]
+    section.page_width = Cm(21.0)
+    section.page_height = Cm(29.7)
+
     header, footer = doc.sections[0].header, doc.sections[0].footer
     header_para, footer_para = header.paragraphs[0], footer.paragraphs[0]
     run_h, run_f = header_para.add_run(header_text), footer_para.add_run()
