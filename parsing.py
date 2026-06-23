@@ -175,6 +175,17 @@ def get_formatted_text(cell):
     return "".join(full_text).strip()
 
 
+def _normalize_image_blob(blob):
+    if (
+        blob[:2] == b"\xff\xd8"
+        and b"JFIF" not in blob[:24]
+        and b"Exif" not in blob[:24]
+    ):
+        jfif = b"\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00\x00"
+        return blob[:2] + jfif + blob[2:]
+    return blob
+
+
 def _extract_images_from_cell(cell, doc, image_output_dir, prefix):
     image_infos = []
 
@@ -214,9 +225,8 @@ def _extract_images_from_cell(cell, doc, image_output_dir, prefix):
                 filename = f"{prefix}_{len(image_infos) + 1}{ext}"
                 out_path = image_output_dir / filename
 
-                if not out_path.exists():
-                    with open(out_path, "wb") as f:
-                        f.write(image_part.blob)
+                with open(out_path, "wb") as f:
+                    f.write(_normalize_image_blob(image_part.blob))
 
                 image_infos.append(
                     {
